@@ -1,0 +1,449 @@
+/*cup*/
+
+import java_cup.runtime.*;
+/*import exceptions.*;*/
+import java.util.*;
+import flowchart.*; 
+
+
+action code
+{:
+
+:}
+
+parser code
+{:
+	public int countIW;
+	public Boolean countIF[]=new Boolean[100];
+	public flowchart.Module sampleModule;
+	public Procedure proc;
+	public WhileStatement wstmt[]=new WhileStatement[100];
+	public WhileStatement oneWstmt;
+	public IfStatement ifstmt[] =new IfStatement[100];
+	public IfStatement oneIfstmt;
+:}
+
+init with
+{:
+	countIW=0;
+	System.out.println("init");	
+	sampleModule=null;
+	proc=null;
+	oneWstmt=null;
+	oneIfstmt=null;
+:}
+
+scan with {: return getScanner().next_token(); :};
+
+/*keyword*/
+terminal 	INTEGER, BOOLEAN, READ, WRITE, WRITELN, RECORD, ARRAY, MODULE,
+	 CONST, TYPE, VAR, PROCEDURE; 
+terminal	IF, THEN, ELSIF, ELSE, WHILE, DO, BEGIN, END, OF;
+/*operator*/
+terminal    PLUS,MINUS,TIMES,DIVIDE,MOD,ASSIGN;
+terminal	EQ, NEQ, LT, LE, GT, GE, OR, AND, NOT;
+/**/
+terminal	SEMI, COLON, COMMA, PERIOD, LBRACKET, RBRACKET, LPAREN, RPAREN;
+/**/
+terminal String	IDENTIFIER,NUMBER;
+//terminal Integer	NUMBER;
+
+non terminal String	program_code;
+non terminal String	module_block, module_begin, module_content,declarations, procedure_declaration, procedure_begin;
+non terminal String	procedure_heading, procedure_body;
+non terminal	const_declare, type_declare, var_declare, const_list, type_list, var_list;
+non terminal	array_part, rw_statement, field_one, field_list;
+non terminal	statement_sequence, statement, while_statement, while_begin ,if_statement, if_begin ,elsif_statement, else_statement;
+non terminal String	procedure_call, assignment, var_if;
+
+non terminal String type_id,  identifier_list, array_type, record_type, type_but_array;
+non terminal String	selector,expression, formal_parameters, ap_list, actual_parameters, fp_section;
+
+precedence right ASSIGN;
+precedence left OR;
+precedence left AND;
+precedence right NOT;
+precedence left EQ, NEQ, LT, LE, GT, GE;
+precedence left PLUS, MINUS;
+precedence left TIMES, DIVIDE, MOD;
+precedence left LPAREN;
+
+
+/*The grammar */
+program_code ::=	module_block:m	
+		{:
+			System.out.println("success");
+			parser.sampleModule.show();
+		:};
+
+module_block ::= 	module_begin SEMI declarations module_content END IDENTIFIER:id2 PERIOD
+		{: 	:};
+
+module_begin ::=	MODULE IDENTIFIER:id1
+		{:
+			parser.sampleModule=new flowchart.Module(id1);
+			System.out.println("Begin");			
+		:};
+
+module_content ::=	BEGIN statement_sequence 
+		{:
+			
+		:}
+		| /*empty*/;
+		
+declarations ::=	const_declare type_declare var_declare procedure_declaration	{::};
+
+const_declare ::=	CONST const_list | /*empty*/	{::};
+
+const_list	::=	const_list IDENTIFIER:id EQ expression:e SEMI 
+		{:
+			
+		:}
+		| /*empty*/;
+
+type_declare ::=	TYPE type_list | /*empty*/;
+
+type_list ::=	type_list IDENTIFIER:id EQ type_id:t SEMI
+		{:
+			
+		:}
+		| /*empty*/	{::};
+
+var_declare ::=	VAR var_list | /*empty*/ 	{::};
+
+
+var_list ::=		var_list identifier_list:id_list COLON type_id:t SEMI
+		{:
+			
+		:}
+		| /*empty*/	{::};
+
+identifier_list ::=	IDENTIFIER:id
+		{:
+			
+		:}
+		| identifier_list:id_list COMMA IDENTIFIER:id
+		{:
+			
+		:};
+
+procedure_declaration ::=	/*empty*/ 
+			{:
+				
+			:}
+			| procedure_declaration procedure_heading:id1 SEMI procedure_body:id2 SEMI
+			{:	
+				
+			:};
+
+procedure_heading ::=	PROCEDURE IDENTIFIER:id formal_parameters:fp
+			{:
+				parser.proc=parser.sampleModule.add(id);
+			:};
+
+procedure_body ::=		declarations procedure_begin END IDENTIFIER:id
+			{:
+				
+			:};
+
+procedure_begin ::=	BEGIN statement_sequence | /*empty*/	{::};
+
+formal_parameters ::=
+		{:		:}
+		| LPAREN RPAREN
+		{:
+			
+		:}
+		| LPAREN fp_section:fp RPAREN
+		{:
+			
+		:};
+
+fp_section ::=	fp_section:fp SEMI var_if identifier_list:id_list COLON type_id:t
+		{:
+						
+		:}
+		| var_if identifier_list:id_list COLON type_id:t
+		{:
+			
+		:};
+var_if ::=		VAR | ;
+type_id ::=		type_but_array: t
+		{:
+			
+		:}
+		| array_type: t	
+		{:
+			
+		:};
+type_but_array ::=	IDENTIFIER:id
+		{:
+			
+		:}
+		| INTEGER 
+		{:
+			
+		:}
+		| BOOLEAN
+		{:
+			
+		:}
+		| record_type: t	
+		{: 
+			
+		:};
+
+record_type ::=	RECORD field_list END	{::};
+field_list ::=	field_list SEMI field_one | field_one {::};
+field_one ::=	| identifier_list COLON type_id	{::};
+
+array_type ::=	array_part type_but_array	
+		{:
+			
+		:};
+array_part ::=	array_part ARRAY expression OF | ARRAY expression OF{::};
+
+
+statement_sequence ::=	statement | statement_sequence SEMI statement	{:   :};
+statement	::=	assignment | procedure_call | if_statement | while_statement | rw_statement | /*empty*/	{: :};
+
+rw_statement ::=	  READ LPAREN IDENTIFIER RPAREN 
+		| READ IDENTIFIER RPAREN 
+		{:		:}
+		| READ LPAREN IDENTIFIER 	
+		{:		:}
+		| WRITE IDENTIFIER RPAREN 
+		{:		:}
+		| READ LPAREN RPAREN
+		{:
+			
+		:}
+		| WRITE LPAREN RPAREN
+		{:
+			
+		:}
+		| WRITE LPAREN IDENTIFIER 	
+		{:		:}
+		| WRITE LPAREN IDENTIFIER RPAREN 
+		| WRITELN ;
+while_statement ::=	while_begin  DO statement_sequence END	
+		{:
+				System.out.println("while");
+				parser.countIW--;
+		:};
+
+while_begin ::=	WHILE expression:e 
+		{: 
+			parser.countIW++;
+			parser.countIF[parser.countIW]=true;
+			parser.oneWstmt=new WhileStatement(e);
+			parser.wstmt[parser.countIW]=parser.oneWstmt;
+			
+			
+			if(parser.countIW-1==0)
+				parser.proc.add(parser.wstmt[parser.countIW]);
+			else if(parser.countIF[parser.countIW-1]){
+				parser.wstmt[parser.countIW-1].getLoopBody().add(parser.wstmt[parser.countIW]);
+			}else{
+				parser.ifstmt[parser.countIW-1].getTrueBody().add(parser.wstmt[parser.countIW]);
+			}
+		 :} ;
+
+if_statement ::=	if_begin  THEN statement_sequence elsif_statement else_statement END	
+		{:
+				System.out.println("if");
+				parser.countIW--;
+		:};
+
+if_begin ::=	IF expression:e 
+		{:
+			parser.countIW++;
+			parser.countIF[parser.countIW]=false;
+			parser.oneIfstmt=new IfStatement(e);
+			parser.ifstmt[parser.countIW]=parser.oneIfstmt;
+
+
+			if(parser.countIW-1==0)
+				parser.proc.add(parser.ifstmt[parser.countIW]);
+			else if(parser.countIF[parser.countIW-1]){
+				parser.wstmt[parser.countIW-1].getLoopBody().add(parser.ifstmt[parser.countIW]);
+			}else{
+				parser.ifstmt[parser.countIW-1].getTrueBody().add(parser.ifstmt[parser.countIW]	);
+			}
+			
+		:};
+
+elsif_statement ::=	elsif_statement ELSIF expression THEN statement_sequence | /*empty*/	{::};
+
+else_statement ::=	/*empty*/ | ELSE statement_sequence	{::};
+
+procedure_call ::=	IDENTIFIER:id actual_parameters: ap	
+		{:
+			RESULT=id+ap;	
+			
+			if(parser.countIW==0)
+				parser.proc.add(new PrimitiveStatement(RESULT));
+			else if(parser.countIF[parser.countIW]){
+				parser.wstmt[parser.countIW].getLoopBody().add(new PrimitiveStatement(RESULT));
+			}else{
+				parser.ifstmt[parser.countIW].getTrueBody().add(new PrimitiveStatement(RESULT));
+			}
+		:};
+actual_parameters::=	 {:	RESULT=" ";	:}
+		| LPAREN ap_list:ap RPAREN
+		{:	RESULT="("+ap+")";	:};
+ap_list ::=		ap_list:ap COMMA expression:e
+		{:
+			RESULT=ap+","+e;
+		:}
+		| expression:e
+		{:
+			RESULT=e;
+		:}
+		| 
+		{:
+			RESULT=" ";
+		:};
+assignment ::=	IDENTIFIER:id selector:s  ASSIGN expression:e	
+		{:
+			RESULT=id+s+":="+e;
+			
+			if(parser.countIW==0)
+				parser.proc.add(new PrimitiveStatement(id+s+":="+e));
+			else if(parser.countIF[parser.countIW]){
+				parser.wstmt[parser.countIW].getLoopBody().add(new PrimitiveStatement(id+s+":="+e));
+			}
+			else{
+				parser.ifstmt[parser.countIW].getTrueBody().add(new PrimitiveStatement(id+s+":="+e));
+			}
+		:};
+
+expression ::= 	  NUMBER NUMBER 	{:		:}
+		| EQ expression:e1		{:		:}
+		| expression:e1 EQ		{:		:}
+		| expression:e1 EQ expression:e2
+		{:
+			RESULT=e1+"="+e2;
+			System.out.println(RESULT);
+		:}
+
+		| NEQ expression:e1		{:		:}
+		| expression:e1 NEQ		{:		:}
+		| expression:e1 NEQ expression:e2
+		{:
+			RESULT=e1+"#"+e2;
+		:}
+
+		| LE expression:e1		{:		:}
+		| expression:e1 LE		{:		:}
+		| expression:e1 LE expression:e2
+		{:
+			RESULT=e1+"<="+e2;
+		:}
+
+		| LT expression:e1		{:		:}
+		| expression:e1 LT		{:		:}
+		| expression:e1 LT expression:e2
+		{:
+			RESULT=e1+"<"+e2;
+		:}
+		| GE expression:e1		{:		:}
+		| expression:e1 GE		{:		:}
+		| expression:e1 GE expression:e2
+		{:
+			RESULT=e1+">="+e2;
+		:}
+
+		| GT expression:e1		{:	:}
+		| expression:e1 GT		{:		:}
+		|expression:e1 GT expression:e2
+		{:
+			RESULT=e1+">"+e2;
+		:}
+		
+		
+		| PLUS expression:e1		{:		:}
+		| expression:e1 PLUS		{:		:}
+		| expression:e1 PLUS expression:e2 
+		{:
+			RESULT=e1+"+"+e2;
+		:}
+
+		| MINUS expression:e1		{:	:}
+		| expression:e1 MINUS		{:		:}
+		| expression:e1 MINUS expression:e2 
+		{:
+			RESULT=e1+"-"+e2;
+		:}
+
+		| TIMES expression:e1		{:		:}
+		| expression:e1 TIMES		{:		:}
+		| expression:e1 TIMES expression:e2 
+		{:
+			RESULT=e1+"*"+e2;
+		:}
+
+		| DIVIDE expression:e1		{:		:}
+		| expression:e1 DIVIDE		{:		:}
+		| expression:e1 DIVIDE expression:e2 
+		{:
+			RESULT=e1+" DIV "+e2;
+		:}
+
+		| MOD expression:e1		{:		:}
+		| expression:e1 MOD		{:		:}
+		| expression:e1 MOD expression:e2 
+		{:
+			RESULT=e1+" MOD "+e2;
+		:}
+
+		| AND expression:e1		{:		:}
+		| expression:e1 AND		{:		:}
+		| expression:e1 AND expression:e2
+		{:
+			RESULT=e1+" AND "+e2;
+		:}
+
+		| OR expression:e1 		{:		:}
+		| expression:e1 OR 		{:		:}
+		| expression:e1 OR expression:e2
+		{:
+			RESULT=e1+" OR "+e2;
+		:}
+
+		| NOT			{:		:}
+		| NOT expression:e
+		{:
+			RESULT="~"+e;
+		:}
+
+		| LPAREN expression:e RPAREN	{:	RESULT="("+e+")";	:}
+		| LPAREN RPAREN{:			:}
+
+		| IDENTIFIER:id selector: s
+		{:
+			RESULT=id+s;
+		:}
+
+		| NUMBER:n
+		{:
+			RESULT=n;
+		:};
+
+selector ::=	  selector:s PERIOD IDENTIFIER:id
+		{:	
+			RESULT=s+"."+id;
+		:}
+		| selector:s LBRACKET expression:e RBRACKET 
+		{:
+			RESULT=s+"["+e+"]";
+		:}
+		|
+		{:
+			RESULT=" ";
+		:};
+	
+
+
+
+

@@ -1,0 +1,25 @@
+MODULE MyProgram;
+	PROCEDURE check1(a:BOOLEAN);
+		CONST ZERO=0;
+		VAR x:INTEGER;
+	BEGIN
+		IF a THEN	
+			Read(x);
+			WHILE x> ZERO DO
+				x:=x*(x-1)
+			END;
+			Write(x)
+		END;
+	END check1;
+
+	PROCEDURE check2;
+		CONST ZERO=0;
+		VAR x:INTEGER;
+	BEGIN
+		Read(x);
+		WHILE x> ZERO DO
+			x:=x*(x-1)
+		END;
+		Write(x)
+	END check2;
+END Sample.
